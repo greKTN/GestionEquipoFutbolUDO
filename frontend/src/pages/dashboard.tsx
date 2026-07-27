@@ -1,4 +1,4 @@
-import {useAuth} from "../componentes/authContext"
+import {useAuth} from "../components/authContext"
 import RegistroPage from "./registro";
 
 export default function Dashboard() {

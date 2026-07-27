@@ -1,6 +1,6 @@
 import React from "react";
-import {Registro, Login} from "../componentes/autenticacion";
-import {useAuth} from "../componentes/authContext";
+import {Registro, Login} from "../components/autenticacion";
+import {useAuth} from "../components/authContext";
 
 //pagina del registro
 export default function RegistroPage() {
