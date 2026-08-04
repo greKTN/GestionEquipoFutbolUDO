@@ -1,5 +1,5 @@
-import React, {createContext, useState, useEffect, useContext} from "react";
-import {supabase} from "../supabase";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { supabase } from "../supabase";
 
 type AuthContextType = {
     session: any;
@@ -8,44 +8,83 @@ type AuthContextType = {
     actualizarRol: (userId: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({session: null, rol: null, cargando: false, actualizarRol: async () => {}});
+const AuthContext = createContext<AuthContextType>({
+    session: null, 
+    rol: null, 
+    cargando: true, 
+    actualizarRol: async () => {}
+});
 
 export const AuthProvider = ({children}: {children: React.ReactNode}) => {
-    // [CAMBIO TEMPORAL]: Se inicializa con cargando en false y un rol de prueba para maquetación.
-    // [ORIGINAL]: const [session, setSession] = useState<any>(null); const [rol, setRol] = useState<string | null>(null); const [cargando, setCargando] = useState<boolean>(true);
-    const [session] = useState<any>(null);
-    const [rol] = useState<string | null>("admin"); 
-    const [cargando] = useState<boolean>(false);
+    const [session, setSession] = useState<any>(null);
+    const [rol, setRol] = useState<string | null>(null);
+    const [cargando, setCargando] = useState<boolean>(true);
 
     useEffect(() => {
-        // [CAMBIO TEMPORAL]: Blindaje para evitar que explote si supabase.ts está desactivado.
-        // [ORIGINAL]: Se ejecutaba directamente sin este if.
-        if (!supabase || !supabase.auth) {
-            return;
-        }
+        // Función asíncrona segura para inicializar la sesión
+        const inicializarAuth = async () => {
+            try {
+                //Verificacion de si Supabase existe antes de llamarlo
+                if (!supabase || !supabase.auth) {
+                    console.error("Supabase no está configurado correctamente.");
+                    setCargando(false);
+                    return;
+                }
 
-        supabase.auth.getSession().then(({data: {session}}) =>{
-            setSession(session);
-            if (session) {
-                buscarRol(session.user.id);
+                //Peticion de la sesion actual a Supabase
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) throw error;
+
+                const currentSession = data?.session;
+                setSession(currentSession);
+                
+                //Si hay sesión, se busca el rol. Si no, apagamos la carga.
+                if (currentSession) {
+                    await buscarRol(currentSession.user.id);
+                } else {
+                    setCargando(false);
+                }
+            } catch (err) {
+                console.error("Error grave al obtener sesión:", err);
+                //Se pone cargando en falso para que ya no ocurra el bug de que se queda eternamente cargando
+                setCargando(false);
             }
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session) {
-                buscarRol(session.user.id);
-            }
-        });
-
-        return () => {
-            subscription.unsubscribe();
         };
+
+        inicializarAuth();
+
+        //Listener de cambios
+        if (supabase && supabase.auth) {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, currentSession: any) => {
+                setSession(currentSession);
+                if (currentSession) {
+                    await buscarRol(currentSession.user.id);
+                } else {
+                    setRol(null);
+                    setCargando(false);
+                }
+            });
+
+            return () => subscription.unsubscribe();
+        }
     }, []);
 
-    const buscarRol = async (_userId: string) => {
-        // [CAMBIO TEMPORAL]: Función vacía para pruebas visuales.
-        // [ORIGINAL]: Aquí iba todo el bloque 'try-catch' con el fetch al backend local.
+    const buscarRol = async (userId: string) => {
+        try{
+            const respuesta = await fetch(`http://localhost:3000/api/usuarios/rol/${userId}`);
+            if (respuesta.ok) {
+                const data = await respuesta.json();
+                setRol(data.rol);
+            } else {
+                setRol(null);
+            }
+        } catch (error) {
+            console.error("Error al buscar el rol en PostgreSQL: ", error);
+            setRol(null);
+        } finally {
+            setCargando(false);
+        }
     };
 
     return (

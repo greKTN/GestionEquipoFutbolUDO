@@ -1,10 +1,12 @@
 import React from "react";
 import {Registro, Login} from "../components/autenticacion";
 import {useAuth} from "../components/authContext";
+import { useNavigate } from 'react-router-dom';
 
 //pagina del registro
 export default function RegistroPage() {
     const {actualizarRol} = useAuth();
+    const navigate = useNavigate();
 
     //funcion para manejar el registro de usuarios
     const handleRegistro = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -48,6 +50,7 @@ export default function RegistroPage() {
                 if (response.ok) {
                     console.log("¡Éxito! Usuario registrado en Supabase y en la DB local.");
                     await actualizarRol(id_usuario);
+                    navigate('/ceo')
                 } else {
                     console.error("Supabase lo creó, pero hubo un error en DB local.");
                 }

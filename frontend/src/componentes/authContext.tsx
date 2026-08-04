@@ -17,28 +17,31 @@ export const AuthProvider = ({children}: {children: React.ReactNode}) => {
     const [cargando, setCargando] = useState<boolean>(true);
 
     useEffect(() => {
-        //se obtiene la sesion actual
-
-        supabase.auth.getSession().then(({data: {session}}) =>{
+        // 1. En vez de desestructurar directo, recibimos la respuesta como "any"
+        supabase.auth.getSession().then((respuesta: any) => {
+            const session = respuesta.data.session;
             setSession(session);
+            
             if (session) {
                 buscarRol(session.user.id);
-            }
-            else{
+            } else {
                 setCargando(false);
             }
         });
 
-        supabase.auth.onAuthStateChange((_event, session) => {
+        // 2. Le agregamos explícitamente ": any" a _event y a session
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             setSession(session);
+            
             if (session) {
                 buscarRol(session.user.id);
-            }
-            else{
+            } else {
                 setRol(null);
                 setCargando(false);
             }
         });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const buscarRol = async (userId: string) => {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Mantiene el estado abierto/cerrado guardado en la sesión del navegador
+    //Mantiene el estado abierto/cerrado guardado en la sesión del navegador
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
         const saved = localStorage.getItem('sidebar_open');
         return saved !== null ? JSON.parse(saved) : true;
@@ -23,6 +24,15 @@ const Sidebar = () => {
         { name: 'Finanzas', icon: '💲', path: '/ceo/finanzas' },
         { name: 'Personal', icon: '👔', path: '/ceo/personal' },
     ];
+
+    const handleLogout = async () => {
+        try {
+            await supabase.auth.signOut(); //Le dice a Supabase que destruya el token
+            navigate('/'); //devuelve a la pantalla de Login
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        }
+    };
 
     return (
         <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 bg-[#070a10] border-r border-gray-800 flex flex-col justify-between py-6 px-4 select-none shrink-0 h-full relative z-10`}>
@@ -84,7 +94,7 @@ const Sidebar = () => {
             {/* Cerrar Sesión */}
             <div>
                 <button 
-                    onClick={() => navigate('/')}
+                    onClick={handleLogout}
                     title={!isSidebarOpen ? 'Cerrar sesión' : ''}
                     className={`w-full flex items-center ${isSidebarOpen ? 'space-x-3 px-3' : 'justify-center px-0'} py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition`}
                 >
