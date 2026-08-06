@@ -81,13 +81,28 @@ app.post('/api/jugadores', async (req, res) => {
 app.get('/api/categorias', async (req, res) => {
     try {
         const query = `
-            SELECT c.id_categoria as id, c.nombre, c.rango_edad as edad, c.genero, COUNT(j.id_jugador) as jugadores,
-            COALESCE((SELECT t.nombre FROM entrenadores e JOIN trabajadores t ON e.id_trabajador = t.id_trabajador JOIN entrenadores_categoria ec ON e.id_entrenador = ec.id_entrenador WHERE ec.id_categoria = c.id_categoria LIMIT 1), 'Sin asignar') as entrenador
-            FROM categorias c LEFT JOIN jugadores j ON c.id_categoria = j.id_categoria GROUP BY c.id_categoria;
+            SELECT 
+                c.id_categoria as id, 
+                c.nombre, 
+                c.rango_edad as edad, 
+                c.genero, 
+                COUNT(j.id_jugador) as jugadores,
+                COALESCE((
+                    -- Consulta optimizada directa a trabajadores
+                    SELECT t.nombre 
+                    FROM trabajadores t 
+                    JOIN entrenadores_categoria ec ON t.id_trabajador = ec.id_trabajador 
+                    WHERE ec.id_categoria = c.id_categoria 
+                    LIMIT 1
+                ), 'Sin asignar') as entrenador
+            FROM categorias c
+            LEFT JOIN jugadores j ON c.id_categoria = j.id_categoria
+            GROUP BY c.id_categoria;
         `;
         const result = await pool.query(query);
         res.json(result.rows);
     } catch (error) {
+        console.error('Error al obtener categorías:', error);
         res.status(500).json({ message: 'Error interno' });
     }
 });

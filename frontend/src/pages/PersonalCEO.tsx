@@ -7,35 +7,25 @@ interface Empleado {
     email: string;
     cargo: string;
     departamento: string;
-    salario: number;
-    estadoNomina: 'Pagada' | 'Pendiente';
+    salario: number | string; // Puede llegar como string desde la BD
+    estadoNomina: 'Pagada' | 'Pendiente' | string;
     iniciales: string;
 }
 
 const PersonalCEO = () => {
-    // Estado preparado para la futura conexión con la Base de Datos (ej. Supabase)
-    const [personal, setPersonal] = useState<Empleado[]>([
-        { id: 1, nombre: 'Roberto García', email: 'director@academia.com', cargo: 'CEO / Director', departamento: 'Dirección', salario: 5000, estadoNomina: 'Pagada', iniciales: 'RG' },
-        { id: 2, nombre: 'Laura Mendoza', email: 'lmendoza@academia.com', cargo: 'Jefa de RRHH', departamento: 'Recursos Humanos', salario: 2800, estadoNomina: 'Pagada', iniciales: 'LM' },
-        { id: 3, nombre: 'Luis Castillo', email: 'lcastillo@academia.com', cargo: 'Entrenador Sub-17 M', departamento: 'Cuerpo Técnico', salario: 2200, estadoNomina: 'Pagada', iniciales: 'LC' },
-        { id: 4, nombre: 'Elena Ruiz', email: 'eruiz@academia.com', cargo: 'Entrenadora Primera F', departamento: 'Cuerpo Técnico', salario: 2200, estadoNomina: 'Pagada', iniciales: 'ER' },
-        { id: 5, nombre: 'Dr. Ramón Ponce', email: 'rponce@academia.com', cargo: 'Fisioterapeuta', departamento: 'Médico', salario: 2600, estadoNomina: 'Pendiente', iniciales: 'DR' },
-        { id: 6, nombre: 'Marco Silva', email: 'msilva@academia.com', cargo: 'Ojeador Principal', departamento: 'Scouting', salario: 2400, estadoNomina: 'Pagada', iniciales: 'MS' },
-        { id: 7, nombre: 'Pedro Alonso', email: 'palonso@academia.com', cargo: 'Encargado Residencia', departamento: 'Residencia', salario: 1800, estadoNomina: 'Pagada', iniciales: 'PA' },
-        { id: 8, nombre: 'Rosa Jiménez', email: 'rjimenez@academia.com', cargo: 'Jefa de Limpieza', departamento: 'Residencia', salario: 1500, estadoNomina: 'Pagada', iniciales: 'RJ' },
-        { id: 9, nombre: 'Antonio Vega', email: 'avega@academia.com', cargo: 'Jefe de Cocina', departamento: 'Residencia', salario: 1800, estadoNomina: 'Pagada', iniciales: 'AV' },
-    ]);
+    // Estados para almacenar la data real y manejar la carga
+    const [personal, setPersonal] = useState<Empleado[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [loading, setLoading] = useState(false);
 
-    // Simulación de llamada a base de datos (Ej: Supabase)
     useEffect(() => {
         const fetchPersonalFromDB = async () => {
-            setLoading(true);
             try {
-                // AQUÍ HARÁS TU CONSULTA A LA BASE DE DATOS:
-                // const { data, error } = await supabase.from('personal').select('*');
-                // if (data) setPersonal(data);
+                const response = await fetch('http://localhost:3000/api/personal');
+                if (response.ok) {
+                    const data = await response.json();
+                    setPersonal(data);
+                }
             } catch (error) {
                 console.error("Error al cargar el personal:", error);
             } finally {
@@ -60,11 +50,11 @@ const PersonalCEO = () => {
             {/* Sidebar independiente */}
             <Sidebar />
 
-            {/* Contenido principal con scroll */}
-            <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#0b0f19] p-8 space-y-8">
+            {/* main ajustado para controlar el tamaño máximo y el scroll */}
+            <main className="flex-1 flex flex-col h-full bg-[#0b0f19] p-6 md:p-8 gap-6 overflow-hidden">
                 
                 {/* Cabecera / Migas de pan */}
-                <div>
+                <div className="shrink-0">
                     <div className="flex items-center space-x-2 text-xs text-gray-400 mb-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span>Panel de control</span>
@@ -74,26 +64,28 @@ const PersonalCEO = () => {
                     <h1 className="text-3xl font-extrabold tracking-tight text-white">Personal</h1>
                 </div>
 
-                {loading ? (
-                    <div className="flex justify-center items-center py-20 text-gray-400 text-sm">
-                        Cargando personal desde la base de datos...
-                    </div>
-                ) : (
-                    /* Tabla de Personal */
-                    <div className="bg-[#111622] border border-gray-800/80 rounded-2xl overflow-hidden shadow-xl">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="border-b border-gray-800 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                                        <th className="py-4 px-6">Nombre</th>
-                                        <th className="py-4 px-6">Cargo</th>
-                                        <th className="py-4 px-6">Departamento</th>
-                                        <th className="py-4 px-6">Salario</th>
-                                        <th className="py-4 px-6">Nómina</th>
+                {/* Contenedor de la tabla optimizado con flex-1 y min-h-0 para forzar el scroll interno */}
+                <div className="bg-[#111622] border border-gray-800/80 rounded-2xl shadow-xl flex-1 flex flex-col min-h-0">
+                    <div className="overflow-auto flex-1">
+                        <table className="w-full text-left border-collapse relative">
+                            <thead className="sticky top-0 bg-[#111622] z-10 shadow-sm">
+                                <tr className="border-b border-gray-800 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                                    <th className="py-4 px-6">Nombre</th>
+                                    <th className="py-4 px-6">Cargo</th>
+                                    <th className="py-4 px-6">Departamento</th>
+                                    <th className="py-4 px-6">Salario</th>
+                                    <th className="py-4 px-6">Nómina</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-800/50 text-sm">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-emerald-400 font-bold">
+                                            Cargando personal desde la base de datos...
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-800/50 text-sm">
-                                    {personal.map((empleado) => (
+                                ) : personal.length > 0 ? (
+                                    personal.map((empleado) => (
                                         <tr key={empleado.id} className="hover:bg-gray-800/30 transition">
                                             {/* Columna Nombre con Avatar e Email */}
                                             <td className="py-4 px-6 flex items-center space-x-3">
@@ -113,27 +105,33 @@ const PersonalCEO = () => {
 
                                             {/* Departamento */}
                                             <td className="py-4 px-6 text-gray-400 text-xs">
-                                                {empleado.departamento}
+                                                {empleado.departamento || 'No asignado'}
                                             </td>
 
                                             {/* Salario */}
                                             <td className="py-4 px-6 font-bold text-white">
-                                                €{empleado.salario.toLocaleString()}
+                                                €{Number(empleado.salario).toLocaleString()}
                                             </td>
 
                                             {/* Nómina (Estado) */}
                                             <td className="py-4 px-6">
                                                 <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${getNominaBadge(empleado.estadoNomina)}`}>
-                                                    {empleado.estadoNomina}
+                                                    {empleado.estadoNomina || 'Pendiente'}
                                                 </span>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-gray-500 text-sm">
+                                            No se encontró personal registrado.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                )}
+                </div>
 
             </main>
         </div>

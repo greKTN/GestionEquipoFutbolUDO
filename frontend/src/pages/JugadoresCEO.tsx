@@ -1,21 +1,30 @@
-import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar'; // <--- Importación corregida de la sidebar
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../components/Sidebar';
 
 const JugadoresCEO = () => {
     const [busqueda, setBusqueda] = useState('');
+    
+    // Estados para la DB
+    const [jugadores, setJugadores] = useState<any[]>([]);
+    const [cargando, setCargando] = useState(true);
 
-    const [jugadores] = useState([
-        { id: 1, nombre: 'Santiago Ramírez', posicion: 'Delantero · #9', categoria: 'Sub-17 Masc.', estado: 'Activo', cuota: 'Pagado', residencia: 'Residente', iniciales: 'SR' },
-        { id: 2, nombre: 'Diego Morales', posicion: 'Mediocampista · #8', categoria: 'Sub-17 Masc.', estado: 'Lesionado', cuota: 'Pagado', residencia: 'Residente', iniciales: 'DM' },
-        { id: 3, nombre: 'Mateo Jiménez', posicion: 'Defensa Central · #4', categoria: 'Sub-17 Masc.', estado: 'Activo', cuota: 'Vencido', residencia: 'Externo', iniciales: 'MJ' },
-        { id: 4, nombre: 'Lucas Fernández', posicion: 'Portero · #1', categoria: 'Sub-20 Masc.', estado: 'Activo', cuota: 'Pagado', residencia: 'Residente', iniciales: 'LF' },
-        { id: 5, nombre: 'Alejandro Soto', posicion: 'Extremo Izquierdo · #11', categoria: 'Sub-20 Masc.', estado: 'Activo', cuota: 'Pendiente', residencia: 'Residente', iniciales: 'AS' },
-        { id: 6, nombre: 'Valentina Cruz', posicion: 'Mediocampista · #10', categoria: 'Sub-17 Fem.', estado: 'Activo', cuota: 'Pagado', residencia: 'Externo', iniciales: 'VC' },
-        { id: 7, nombre: 'Camila Torres', posicion: 'Defensa Lateral · #3', categoria: 'Sub-17 Fem.', estado: 'Suspendido', cuota: 'Pagado', residencia: 'Residente', iniciales: 'CT' },
-        { id: 8, nombre: 'Isabella Martín', posicion: 'Delantera Centro · #9', categoria: 'Sub-20 Fem.', estado: 'Activo', cuota: 'Pagado', residencia: 'Residente', iniciales: 'IM' },
-        { id: 9, nombre: 'Carlos Vega', posicion: 'Mediocampista · #7', categoria: 'Sub-13 Masc.', estado: 'Activo', cuota: 'Pagado', residencia: 'Externo', iniciales: 'CV' },
-        { id: 10, nombre: 'Andrés López', posicion: 'Defensa Central · #5', categoria: 'Sub-15 Masc.', estado: 'Activo', cuota: 'Vencido', residencia: 'Residente', iniciales: 'AL' },
-    ]);
+    useEffect(() => {
+        const fetchJugadores = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/jugadores/lista');
+                if (response.ok) {
+                    const data = await response.json();
+                    setJugadores(data);
+                }
+            } catch (error) {
+                console.error("Error al cargar jugadores:", error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        fetchJugadores();
+    }, []);
 
     const jugadoresFiltrados = jugadores.filter(j => 
         j.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -43,15 +52,12 @@ const JugadoresCEO = () => {
 
     return (
         <div className="fixed inset-0 flex bg-[#0b0f19] text-white font-sans overflow-hidden">
-            
-            {/* 1. Sidebar insertada correctamente */}
             <Sidebar />
 
-            {/* 2. Contenido principal con scroll */}
-            <main className="flex-1 flex flex-col h-full overflow-y-auto bg-[#0b0f19] p-8 space-y-8">
+            {/* main ajustado para controlar el tamaño máximo */}
+            <main className="flex-1 flex flex-col h-full bg-[#0b0f19] p-6 md:p-8 gap-6 overflow-hidden">
                 
-                {/* Cabecera / Migas de pan */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 shrink-0">
                     <div>
                         <div className="flex items-center space-x-2 text-xs text-gray-400 mb-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -62,7 +68,6 @@ const JugadoresCEO = () => {
                         <h1 className="text-3xl font-extrabold tracking-tight text-white">Jugadores</h1>
                     </div>
 
-                    {/* Barra de búsqueda */}
                     <div className="relative w-full md:w-72">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,11 +84,11 @@ const JugadoresCEO = () => {
                     </div>
                 </div>
 
-                {/* Tabla de Jugadores */}
-                <div className="bg-[#111622] border border-gray-800/80 rounded-2xl overflow-hidden shadow-xl">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
+                {/* Contenedor de la tabla optimizado con flex-1 y min-h-0 para forzar el scroll interno */}
+                <div className="bg-[#111622] border border-gray-800/80 rounded-2xl shadow-xl flex-1 flex flex-col min-h-0">
+                    <div className="overflow-auto flex-1">
+                        <table className="w-full text-left border-collapse relative">
+                            <thead className="sticky top-0 bg-[#111622] z-10 shadow-sm">
                                 <tr className="border-b border-gray-800 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                                     <th className="py-4 px-6">Jugador</th>
                                     <th className="py-4 px-6">Categoría</th>
@@ -93,7 +98,13 @@ const JugadoresCEO = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-800/50 text-sm">
-                                {jugadoresFiltrados.length > 0 ? (
+                                {cargando ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-emerald-400 font-bold">
+                                            Cargando jugadores...
+                                        </td>
+                                    </tr>
+                                ) : jugadoresFiltrados.length > 0 ? (
                                     jugadoresFiltrados.map((jugador) => (
                                         <tr key={jugador.id} className="hover:bg-gray-800/30 transition">
                                             <td className="py-4 px-6 flex items-center space-x-3">
@@ -122,7 +133,7 @@ const JugadoresCEO = () => {
                                                 <span className={`inline-flex px-3 py-1 rounded-xl text-xs font-medium ${
                                                     jugador.residencia === 'Residente' 
                                                     ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-                                                    : 'text-gray-400'
+                                                    : 'text-gray-400 bg-gray-800/50 border border-gray-700/50'
                                                 }`}>
                                                     {jugador.residencia}
                                                 </span>
@@ -140,7 +151,6 @@ const JugadoresCEO = () => {
                         </table>
                     </div>
                 </div>
-
             </main>
         </div>
     );

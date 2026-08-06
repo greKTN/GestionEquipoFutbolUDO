@@ -1,53 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar'; // <-- Importamos la sidebar única
-// ==========================================
-// 🔌 PUNTO DE INTEGRACIÓN: Importar cliente de Supabase
-// import { supabase } from '../supabase';
-// import { useEffect } from 'react';
 // ==========================================
 
 const CategoriasCEO = () => {
     // Estado para los filtros superiores ('todas' | 'masculino' | 'femenino')
     const [filtroActivo, setFiltroActivo] = useState('todas');
+    
+    // Estados para almacenar la data real y manejar la carga
+    const [categorias, setCategorias] = useState<any[]>([]);
+    const [cargando, setCargando] = useState(true);
 
-    // ==========================================
-    // 🔌 PUNTO DE INTEGRACIÓN CON BASE DE DATOS:
-    // Aquí cargarías las categorías y entrenadores desde Supabase.
-    // Ej: const [categorias, setCategorias] = useState([]);
-    // useEffect(() => {
-    //   async function fetchCategorias() {
-    //     // const { data } = await supabase.from('categorias').select('*, entrenadores(nombre)');
-    //     // setCategorias(data);
-    //   }
-    //   fetchCategorias();
-    // }, []);
-    // ==========================================
+    useEffect(() => {
+        const fetchCategorias = async () => {
+            try {
+                // Llamamos a la ruta de categorias de la API
+                const response = await fetch('http://localhost:3000/api/categorias');
+                if (response.ok) {
+                    const data = await response.json();
+                    setCategorias(data);
+                }
+            } catch (error) {
+                console.error('Error al obtener las categorías:', error);
+            } finally {
+                setCargando(false);
+            }
+        };
 
-    // Listado completo de categorías (Mock data)
-    const listadoCategorias = [
-        // Masculino
-        { id: 1, nombre: 'Sub-7', genero: 'Masculino', edad: '5–7 años', jugadores: 18, entrenador: 'Carlos Méndez' },
-        { id: 2, nombre: 'Sub-9', genero: 'Masculino', edad: '8–9 años', jugadores: 22, entrenador: 'Roberto Fuentes' },
-        { id: 3, nombre: 'Sub-11', genero: 'Masculino', edad: '10–11 años', jugadores: 20, entrenador: 'José Paredes' },
-        { id: 4, nombre: 'Sub-13', genero: 'Masculino', edad: '12–13 años', jugadores: 22, entrenador: 'Miguel Torres' },
-        { id: 5, nombre: 'Sub-15', genero: 'Masculino', edad: '14–15 años', jugadores: 20, entrenador: 'Andrés Vega' },
-        { id: 6, nombre: 'Sub-17', genero: 'Masculino', edad: '16–17 años', jugadores: 20, entrenador: 'Luis Castillo' },
-        { id: 7, nombre: 'Sub-20', genero: 'Masculino', edad: '18–20 años', jugadores: 22, entrenador: 'Fernando Ríos' },
-        { id: 8, nombre: 'Primera', genero: 'Masculino', edad: '18+ años', jugadores: 24, entrenador: 'David Herrera' },
-        
-        // Femenino
-        { id: 9, nombre: 'Sub-7', genero: 'Femenino', edad: '5–7 años', jugadores: 16, entrenador: 'María García' },
-        { id: 10, nombre: 'Sub-9', genero: 'Femenino', edad: '8–9 años', jugadores: 18, entrenador: 'Ana Flores' },
-        { id: 11, nombre: 'Sub-11', genero: 'Femenino', edad: '10–11 años', jugadores: 18, entrenador: 'Patricia Lima' },
-        { id: 12, nombre: 'Sub-13', genero: 'Femenino', edad: '12–13 años', jugadores: 18, entrenador: 'Sandra Cruz' },
-        { id: 13, nombre: 'Sub-15', genero: 'Femenino', edad: '14–15 años', jugadores: 20, entrenador: 'Carmen Reyes' },
-        { id: 14, nombre: 'Sub-17', genero: 'Femenino', edad: '16–17 años', jugadores: 18, entrenador: 'Lucía Moreno' },
-        { id: 15, nombre: 'Sub-20', genero: 'Femenino', edad: '18–20 años', jugadores: 20, entrenador: 'Isabel Vásquez' },
-        { id: 16, nombre: 'Primera', genero: 'Femenino', edad: '18+ años', jugadores: 22, entrenador: 'Elena Ruiz' },
-    ];
+        fetchCategorias();
+    }, []);
 
     // Lógica para filtrar las categorías según el botón seleccionado
-    const categoriasFiltradas = listadoCategorias.filter(cat => {
+    const categoriasFiltradas = categorias.filter(cat => {
         if (filtroActivo === 'masculino') return cat.genero === 'Masculino';
         if (filtroActivo === 'femenino') return cat.genero === 'Femenino';
         return true; // 'todas'
@@ -128,43 +111,55 @@ const CategoriasCEO = () => {
                     </div>
 
                     {/* Grilla de Tarjetas de Categorías */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* 🔌 PUNTO DE INTEGRACIÓN: Mapear 'categoriasFiltradas' directo desde la base de datos */}
-                        {categoriasFiltradas.map((cat) => (
-                            <div 
-                                key={cat.id} 
-                                className="bg-[#111622] border border-gray-800/80 rounded-2xl p-5 relative overflow-hidden shadow-lg flex flex-col justify-between space-y-6 hover:border-gray-700 transition"
-                            >
-                                {/* Cabecera de la Tarjeta */}
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <h3 className="text-xl font-black text-white">{cat.nombre}</h3>
-                                        <p className="text-xs text-gray-400 mt-0.5">Edad: {cat.edad}</p>
-                                    </div>
-                                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${
-                                        cat.genero === 'Masculino'
-                                        ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
-                                        : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
-                                    }`}>
-                                        {cat.genero === 'Masculino' ? 'Masc.' : 'Fem.'}
-                                    </span>
-                                </div>
+                    {cargando ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="text-emerald-400 font-bold">Cargando categorías...</div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {categoriasFiltradas.length > 0 ? (
+                                categoriasFiltradas.map((cat) => (
+                                    <div 
+                                        key={cat.id} 
+                                        className="bg-[#111622] border border-gray-800/80 rounded-2xl p-5 relative overflow-hidden shadow-lg flex flex-col justify-between space-y-6 hover:border-gray-700 transition"
+                                    >
+                                        {/* Cabecera de la Tarjeta */}
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <h3 className="text-xl font-black text-white">{cat.nombre}</h3>
+                                                <p className="text-xs text-gray-400 mt-0.5">Edad: {cat.edad}</p>
+                                            </div>
+                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md ${
+                                                cat.genero === 'Masculino'
+                                                ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20'
+                                                : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
+                                            }`}>
+                                                {cat.genero === 'Masculino' ? 'Masc.' : 'Fem.'}
+                                            </span>
+                                        </div>
 
-                                {/* Cuerpo / Estadísticas de la Tarjeta */}
-                                <div className="space-y-3 pt-2 border-t border-gray-800/60">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-gray-400 font-medium">Jugadores</span>
-                                        <span className="text-sm font-bold text-white">{cat.jugadores}</span>
+                                        {/* Cuerpo / Estadísticas de la Tarjeta */}
+                                        <div className="space-y-3 pt-2 border-t border-gray-800/60">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-gray-400 font-medium">Jugadores</span>
+                                                <span className="text-sm font-bold text-white">{cat.jugadores}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-gray-400 font-medium">Entrenador/a</span>
+                                                <span className={`text-sm font-semibold truncate max-w-[140px] ${cat.entrenador === 'Sin asignar' ? 'text-amber-500/70' : 'text-emerald-400'}`}>
+                                                    {cat.entrenador}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs text-gray-400 font-medium">Entrenador/a</span>
-                                        <span className="text-sm font-semibold text-emerald-400 truncate max-w-[140px]">{cat.entrenador}</span>
-                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full text-center py-10 text-gray-500">
+                                    No se encontraron categorías para este filtro.
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
